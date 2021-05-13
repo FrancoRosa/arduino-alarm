@@ -97,10 +97,16 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(intPin1), checkIntDiferences, CHANGE);
 }
 
+
 void loop() {
   blink();
   digitalWrite(armedPin, flagArmed);
-  digitalWrite(alarmPin, flagAlarm);
+  digitalWrite(alarmPin, HIGH);
+  if (flagAlarm) {
+    digitalWrite(alarmPin, LOW);
+    delay(500);
+    flagAlarm = false;
+  }
   checkAnaDiferences();
   while (Serial.available()) {
     processCommand(Serial.read());
