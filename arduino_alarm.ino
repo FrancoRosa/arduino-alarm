@@ -29,6 +29,9 @@ volatile int prevAna = 0;
 // blink counter
 volatile int blink_i = 0;
 
+// triggers counter
+volatile int alarm_i = 0;
+
 // buffer to show sensorstatus  
 char display_buffer[100];
 volatile bool flagDisplay = false;
@@ -38,7 +41,9 @@ void checkIntDiferences() {
   (prevPin1 =! digitalRead(intPin1))) {
     prevPin0 = digitalRead(intPin0);
     prevPin1 = digitalRead(intPin1);
-    if (flagArmed == true) flagAlarm = true;
+    if (flagArmed == true) {
+      flagAlarm = true; alarm_i = 1;
+    }
   }
 }
 
@@ -47,7 +52,10 @@ void checkAnaDiferences() {
   int anaDiference = anaValue - prevAna;
   if (abs(anaDiference) > anaThreshold) {
     prevAna = anaValue;
-    if (flagArmed) flagAlarm = true;
+    if (flagArmed) {
+      flagAlarm = true;
+      alarm_i = 1;
+    }
   }
 }
 
@@ -58,7 +66,7 @@ void processCommand (char c) {
   if ((buffer_i >= 2) && ((c == '\n') || (c == '\r'))) {
     buffer[buffer_i] = '\0';
     if (memcmp("arm",    buffer, 3)==0) { flagArmed=true; }
-    if (memcmp("disarm", buffer, 3)==0) { flagArmed=false; flagAlarm=false; }
+    if (memcmp("disarm", buffer, 3)==0) { flagArmed=false; flagAlarm=false; alarm_i=0;}
     buffer_i=0;
     for(int i=0; i<buffer_size; i++) buffer[i]=0; 
   }
@@ -102,7 +110,7 @@ void loop() {
   blink();
   digitalWrite(armedPin, flagArmed);
   digitalWrite(alarmPin, HIGH);
-  if (flagAlarm) {
+  if (flagAlarm && alarm_i == 0) {
     digitalWrite(alarmPin, LOW);
     delay(500);
     flagAlarm = false;
