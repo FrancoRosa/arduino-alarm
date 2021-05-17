@@ -1,10 +1,10 @@
 // outputs
 #define ledPin     13
-#define alarmPin   12
+#define alarmPin   5
 #define armedPin   11
 
 // inputs
-#define intPin0    2
+#define intPin0    4
 #define intPin1    3
 #define anaPin     A0
 
@@ -30,7 +30,7 @@ volatile int prevAna = 0;
 volatile int blink_i = 0;
 
 // triggers counter
-volatile int alarm_i = 0;
+volatile int triggered = false;
 
 // buffer to show sensorstatus  
 char display_buffer[100];
@@ -41,8 +41,8 @@ void checkIntDiferences() {
   (prevPin1 =! digitalRead(intPin1))) {
     prevPin0 = digitalRead(intPin0);
     prevPin1 = digitalRead(intPin1);
-    if (flagArmed == true) {
-      flagAlarm = true; alarm_i = 1;
+    if (flagArmed) {
+      flagAlarm = true;
     }
   }
 }
@@ -54,7 +54,6 @@ void checkAnaDiferences() {
     prevAna = anaValue;
     if (flagArmed) {
       flagAlarm = true;
-      alarm_i = 1;
     }
   }
 }
@@ -66,7 +65,7 @@ void processCommand (char c) {
   if ((buffer_i >= 2) && ((c == '\n') || (c == '\r'))) {
     buffer[buffer_i] = '\0';
     if (memcmp("arm",    buffer, 3)==0) { flagArmed=true; }
-    if (memcmp("disarm", buffer, 3)==0) { flagArmed=false; flagAlarm=false; alarm_i=0;}
+    if (memcmp("disarm", buffer, 3)==0) { flagArmed=false; flagAlarm=false; triggered=false;}
     buffer_i=0;
     for(int i=0; i<buffer_size; i++) buffer[i]=0; 
   }
@@ -110,10 +109,10 @@ void loop() {
   blink();
   digitalWrite(armedPin, flagArmed);
   digitalWrite(alarmPin, HIGH);
-  if (flagAlarm && alarm_i == 0) {
+  if (flagAlarm && !triggered) {
     digitalWrite(alarmPin, LOW);
     delay(500);
-    flagAlarm = false;
+    triggered = true;
   }
   checkAnaDiferences();
   while (Serial.available()) {
